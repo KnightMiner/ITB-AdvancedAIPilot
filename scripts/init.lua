@@ -2,7 +2,7 @@ local mod = {
 	id = "advanced_ai_pilot",
 	name = "Advanced AI Pilot",
 	version = "1.0.0",
-	requirements = {}
+	requirements = {"Generic"}
 }
 
 --[[--
