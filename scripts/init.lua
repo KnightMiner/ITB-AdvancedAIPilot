@@ -1,7 +1,7 @@
 local mod = {
 	id = "advanced_ai_pilot",
 	name = "Advanced AI Pilot",
-	version = "1.1.0",
+	version = "1.1.1",
 	modApiVersion = "2.5.1",
 	requirements = {"Generic"}
 }
