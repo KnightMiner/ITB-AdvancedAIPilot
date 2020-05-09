@@ -2,8 +2,12 @@ local mod = {
 	id = "advanced_ai_pilot",
 	name = "Advanced AI Pilot",
 	version = "1.0.0",
+	modApiVersion = "2.5.1",
 	requirements = {"Generic"}
 }
+
+--- Pilot ID to make sure it is not mistyped
+local PILOT_ID = "Pilot_AdvancedAI"
 
 --[[--
 	Adds a sprite to the game
@@ -19,6 +23,15 @@ local function addSprite(path, filename)
 end
 
 --[[--
+  Helper function to load mod scripts
+
+  @param  name   Script path relative to mod directory
+]]
+function mod:loadScript(path)
+  return require(self.scriptPath..path)
+end
+
+--[[--
 	Filters the advanced AI out of the extended pilots list
 
 	@return Extended Pilots list without Advanced AI pilot
@@ -27,7 +40,7 @@ local function filterPilotList()
 	-- TODO: would like to cache this, but its a bit risky
 	local filteredPilotList = {}
 	for _, v in ipairs(PilotListExtended) do
-		if v ~= "Pilot_AdvancedAI" then
+		if v ~= PILOT_ID then
 			filteredPilotList[#filteredPilotList+1] = v
 		end
 	end
@@ -35,40 +48,31 @@ local function filterPilotList()
 	return filteredPilotList
 end
 
--- Cache for pilot unlocked, as the function is called pretty frequently in storage and the pilot selection screen
--- In both cases, the pilot is indeed unlocked
--- Might cause issues switching profiles, but mod loader does not exactly support that
-local pilotUnlocked = false
-
 --[[--
 	Checks if the advanced AI pilot was unlocked
 
 	@return True if the advanced AI was unlocked, false otherwise
 ]]
-local function pilotUnlocked()
-	if pilotUnlocked then
-		return true
-	end
-	-- check and if true, cache it was true
-	pilotUnlocked = Profile ~= nil and Profile.pilots ~= nil and list_contains(Profile.pilots, "Pilot_AdvancedAI")
-	return pilotUnlocked
+function mod:pilotUnlocked()
+	local saveData = self:loadScript("saveData")
+	local pilots = saveData.safeGet(Profile, "pilots")
+	return pilots ~= nil and list_contains(pilots, PILOT_ID)
 end
 
-function mod:init(self)
+function mod:init()
 	addSprite("portraits/pilots", "Pilot_AdvancedAI")
 	addSprite("portraits/pilots", "Pilot_AdvancedAI_2")
 	addSprite("portraits/pilots", "Pilot_AdvancedAI_blink")
 
 	-- rarity is non-zero so its available in the pilot selection screen
 	CreatePilot{
-		Id = "Pilot_AdvancedAI",
+		Id = PILOT_ID,
 		Name = "Adv. A.I. Unit",
 		Personality = "Artificial",
 		Rarity = 1, -- insert into  pilot list
 		Cost = 1,
 		Sex = SEX_AI,
-		Voice = "/voice/ai",
-		Skill = "UnlockableSkill"
+		Voice = "/voice/ai"
 	}
 
 	-- clear rarity afterwards, in case another mod checks for that
@@ -106,22 +110,41 @@ function mod:init(self)
 		-- restore extended pilots list
 		PilotListExtended = oldPilotList
 	end
-
-	-- add skill description
-	local originalGetSkillInfo = GetSkillInfo
-	function GetSkillInfo(skill)
-		if skill == "UnlockableSkill" then
-			if pilotUnlocked() then
-				return PilotSkill("Recruitable", "No Special Ability")
-			else
-				return PilotSkill("Recruitable", "Place in storage to unlock as a starter pilot")
-			end
-		end
-		return originalGetSkillInfo(skill)
-	end
 end
 
-function mod:load(self, options, version)
+function mod:load(options, version)
+	-- the game only unlocks pilots from the inventory, so we need our recruit in inventory
+	modApi:addPostStartGameHook(function()
+		-- skip if unlocked
+		if not self:pilotUnlocked() then
+			-- check if any of the three pilots are the AI unit
+			local saveData = self:loadScript("saveData")
+			local hasAI = false
+			for i = 0, 2 do
+				local pilot = saveData.safeGet(GameData, "current", "pilot" .. i)
+				if saveData.safeGet(pilot, "id") == PILOT_ID then
+					-- do not run if the pilot has XP, that means they came from another run and somehow are still not unlocked
+					-- skip to prevent deleting a good pilot
+					if saveData.safeGet(pilot, "exp") > 0 then
+						hasAI = false
+						break
+					end
+					-- normal pilots
+					hasAI = true
+				end
+			end
+
+			-- if so, add it to the inventory then remove it to unlock
+			if hasAI then
+				-- ideally, we would add and remove a pilot from inventory
+				-- unfortunately, there is no way to filter RemoveItem, it removes all copies, even the pilot in the mech
+				-- so just manually "take the pilot out" for the player to unlock. Does fail the achievement criteria, but not much I can do about that
+				--Game:AddPilot(PILOT_ID)
+				Game:RemoveItem(PILOT_ID)
+				Game:AddPilot(PILOT_ID)
+			end
+		end
+	end)
 end
 
 return mod
