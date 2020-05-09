@@ -32,23 +32,6 @@ function mod:loadScript(path)
 end
 
 --[[--
-	Filters the advanced AI out of the extended pilots list
-
-	@return Extended Pilots list without Advanced AI pilot
-]]
-local function filterPilotList()
-	-- TODO: would like to cache this, but its a bit risky
-	local filteredPilotList = {}
-	for _, v in ipairs(PilotListExtended) do
-		if v ~= PILOT_ID then
-			filteredPilotList[#filteredPilotList+1] = v
-		end
-	end
-
-	return filteredPilotList
-end
-
---[[--
 	Checks if the advanced AI pilot was unlocked
 
 	@return True if the advanced AI was unlocked, false otherwise
@@ -84,31 +67,13 @@ function mod:init()
 	-- make pilot available as a recruit, thats how they are unlocked
 	table.insert(Pilot_Recruits, "Pilot_AdvancedAI")
 
-	-- prevent the advanced AI from dropping in timepods or appearing as an island reward
-	local oldGetPilotDrop = getPilotDrop
-	function getPilotDrop()
-		-- filter out advanced AI
-		local oldPilotList = PilotListExtended
-		PilotListExtended = filterPilotList()
-
-		-- call logic
-		local result = oldGetPilotDrop()
-
-		-- restore extended pilots list
-		PilotListExtended = oldPilotList
-		return result
-	end
+	-- rremove the pilot from the deck
 	local oldInitializeDecks = initializeDecks
 	function initializeDecks()
-		-- filter out advanced AI
-		local oldPilotList = PilotListExtended
-		PilotListExtended = filterPilotList()
-
-		-- call logic
+		-- call original logic
 		oldInitializeDecks()
-
-		-- restore extended pilots list
-		PilotListExtended = oldPilotList
+		-- remove our pilot from the deck
+		remove_element(pilot, GAME.PilotDeck)
 	end
 end
 
