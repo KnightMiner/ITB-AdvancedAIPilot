@@ -1,7 +1,7 @@
 local mod = {
 	id = "advanced_ai_pilot",
 	name = "Advanced AI Pilot",
-	version = "1.0.0",
+	version = "1.1.0",
 	modApiVersion = "2.5.1",
 	requirements = {"Generic"}
 }
@@ -52,12 +52,11 @@ function mod:init()
 		Id = PILOT_ID,
 		Name = "Adv. A.I. Unit",
 		Personality = "Artificial",
-		Rarity = 1, -- insert into  pilot list
+		Rarity = 1,
 		Cost = 1,
 		Sex = SEX_AI,
 		Voice = "/voice/ai"
 	}
-
 	-- clear rarity afterwards, in case another mod checks for that
 	Pilot_AdvancedAI.Rarity = 0
 
@@ -65,7 +64,7 @@ function mod:init()
 	Personality.Artificial.Gamestart = "Status: Time breach successful."
 
 	-- make pilot available as a recruit, thats how they are unlocked
-	table.insert(Pilot_Recruits, "Pilot_AdvancedAI")
+	table.insert(Pilot_Recruits, PILOT_ID)
 
 	-- rremove the pilot from the deck
 	local oldInitializeDecks = initializeDecks
