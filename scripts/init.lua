@@ -100,7 +100,6 @@ function mod:init()
 	}
 	CreatePilot{
 		Id = PILOT_BLOOD,
-		Name = "Blood Psion",
 		Personality = "Vek",
 		Rarity = 1,
 		Sex = SEX_VEK,
@@ -109,7 +108,6 @@ function mod:init()
 	}
 	CreatePilot{
 		Id = PILOT_BOT,
-		Name = "Speed-Bot",
 		Personality = "Artificial",
 		Rarity = 1,
 		Sex = SEX_AI,
