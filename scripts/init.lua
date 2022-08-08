@@ -77,42 +77,6 @@ function mod:init()
 end
 
 function mod:load(options, version)
-	-- the game only unlocks pilots from the inventory, so we need our recruit in inventory
-	modApi:addPostStartGameHook(function()
-		-- skip if unlocked, or if not in the pilot list (not unlockable)
-		if not self:pilotUnlocked() and list_contains(PilotList, PILOT_ID) then
-			-- check if any of the three pilots are the AI unit
-			local saveData = self:loadScript("saveData")
-			local aiCount = 0
-			for i = 0, 2 do
-				local pilot = saveData.safeGet(GameData, "current", "pilot" .. i)
-				if saveData.safeGet(pilot, "id") == PILOT_ID then
-					-- do not run if the pilot has XP, that means they came from another run and somehow are still not unlocked
-					-- skip to prevent deleting a good pilot
-					if saveData.safeGet(pilot, "exp") > 0 then
-						aiCount = 0
-						break
-					end
-					-- count seen pilots so we can add back one for each removed
-					-- apparently selecting a new pilot that is a recruit does not block a matching recruit
-					aiCount = aiCount + 1
-				end
-			end
-
-			-- if so, add it to the inventory then remove it to unlock
-			if aiCount > 0 then
-				-- ideally, we would add and remove a pilot from inventory
-				-- unfortunately, there is no way to filter RemoveItem, it removes all copies, even the pilot in the mech
-				-- so just manually "take the pilot out" for the player to unlock. Does fail the achievement criteria, but not much I can do about that
-				--Game:AddPilot(PILOT_ID)
-				Game:RemoveItem(PILOT_ID)
-				-- add back all pilots that were deleted
-				for i = 1, aiCount do
-					Game:AddPilot(PILOT_ID)
-				end
-			end
-		end
-	end)
 end
 
 return mod
