@@ -10,7 +10,6 @@ local mod = {
 local PILOT_ADV = "Pilot_AdvancedAI"
 local PILOT_BLOOD = "Pilot_AdvPsion"
 local PILOT_BOT = "Pilot_AdvSnowbot"
-local PILOT_XP = "Pilot_Original"
 
 --[[--
 	Adds a sprite to the game
@@ -46,38 +45,6 @@ function mod:pilotUnlocked(id)
 end
 
 function mod:metadata()
-	local values = {"starter", "deck", "both", "neither"}
-	local strings = {"Starter Pilot", "Pilot Deck", "Both", "Neither"}
-	local tooltips = {
-		"Pilot is available as one of the two starter pilots.",
-		"Pilot will appear in time pods and as perfect island rewards.",
-		"Pilot appears both as a starter and in the pilot deck.",
-		"Pilot cannot be found in timelines, only in hangar once unlocked."
-	}
-  modApi:addGenerationOption(
-    PILOT_ADV,
-    "Advanced AI Unit",
-    "Select where the Advanced AI Unit shows up in timelines.",
-    {values = values, strings=strings, tooltips = tooltips, value = "starter"}
-  )
-  modApi:addGenerationOption(
-    PILOT_BLOOD,
-    "Blood Psion",
-    "Select where the Blood Psion shows up in timelines.",
-    {values = values, strings=strings, tooltips = tooltips, value = "starter"}
-  )
-  modApi:addGenerationOption(
-    PILOT_BOT,
-    "Speed-Bot",
-    "Select where the Speed-Bot shows up in timelines.",
-    {values = values, strings=strings, tooltips = tooltips, value = "starter"}
-  )
-  modApi:addGenerationOption(
-    PILOT_XP,
-    "Ralph Karlson",
-    "Select where Ralph Karlson shows up in timelines.",
-    {values = values, strings=strings, tooltips = tooltips, value = "both"}
-  )
 end
 
 function mod:init()
@@ -127,46 +94,8 @@ function mod:init()
 	table.insert(Pilot_Recruits, PILOT_ADV)
 	table.insert(Pilot_Recruits, PILOT_BLOOD)
 	table.insert(Pilot_Recruits, PILOT_BOT)
-
 	-- load in logic behind the skills
 	self:loadScript("skills")
-
-	-- rremove the pilot from the deck
-	local oldCheckPilotDeck = checkPilotDeck
-	local IDS = {PILOT_ADV, PILOT_BLOOD, PILOT_BOT, PILOT_XP}
-	function checkPilotDeck()
-		local wasEmpty = #GAME.PilotDeck == 0
-		-- call original logic
-		oldCheckPilotDeck()
-
-		-- remove disabled pilots from the deck
-		-- TODO: this should be a modloader feature
-		if wasEmpty then
-			for _, id in ipairs(IDS) do
-				if not mod.pilotDeck[id] then
-					remove_element(id, GAME.PilotDeck)
-				end
-			end
-		end
-	end
-end
-
-local function loadConfig(options, pilot, default)
-	local value = (options[pilot] and options[pilot].value) or default
-
-	-- mark the pilot as appearing in time pods
-	mod.pilotDeck[pilot] = value == "both" or value == "deck"
-	_G[pilot].Rarity = mod.pilotDeck[pilot] and 1 or 0
-
-	-- add or remove pilot from the starter list
-	local isStarter = value == "both" or value == "starter"
-	if isStarter then
-		if not list_contains(Pilot_Recruits, pilot) then
-			table.insert(Pilot_Recruits, pilot)
-		end
-	else
-		remove_element(pilot, Pilot_Recruits)
-	end
 end
 
 function mod:load(options, version)
@@ -174,11 +103,6 @@ function mod:load(options, version)
 	modApi:setText("Pilot_AdvPsionRegen_Text", "Repair 1 HP before vek attack each turn.")
 	modApi:setText("Pilot_AdvMoveSpeed_Title", "+1 Move")
 	modApi:setText("Pilot_AdvMoveSpeed_Text", "Increases the mech's move speed by 1.")
-
-	loadConfig(options, PILOT_ADV,   "starter")
-	loadConfig(options, PILOT_BLOOD, "starter")
-	loadConfig(options, PILOT_BOT,   "starter")
-	loadConfig(options, PILOT_XP,    "both")
 end
 
 return mod
